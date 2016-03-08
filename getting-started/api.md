@@ -55,7 +55,7 @@ The installer will also ask you for:
 * a name and a description of the API that will be used in the generated documentation
 * a secret token (choose a long one) for cryptographic features
 
-Take a look at [the content of the generated directory](https://github.com/dunglas/blog-api). You might recognize a [Symfony
+Take a look at [the content of the generated directory](https://github.com/dunglas/blog-api). You maybe recognize a [Symfony
 application directory structure](https://symfony.com/doc/current/quick_tour/the_architecture.html). It's fine and intended:
 **the generated skeleton is a perfectly valid Symfony full-stack application** that follows [Symfony Best Practices](https://symfony.com/doc/current/best_practices/index.html).
 
@@ -67,7 +67,7 @@ It means that with this default API Platform setup, you can:
 You can also use API Platform in any existing Symfony application.
 
 While API Platform is perfectly integrated with Symfony, keep in mind that it's basically a set of standalone PHP components.
-You can also use those components in plain PHP (without framework) as well as with other frameworks.
+You can also use those components in raw PHP (without framework) as well as with other frameworks.
 
 The skeleton comes with a demonstration bookstore API. You can play with it by running the following commands:
 
