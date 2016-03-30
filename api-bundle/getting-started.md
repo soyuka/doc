@@ -1,11 +1,10 @@
 # Getting started
 
-## Installing DunglasApiBundle
+## Installing ApiPlatformBundle
 
-If you are starting a new project, the easiest way to get DunglasApiBundle up, running and well integrated with other useful
+If you are starting a new project, the easiest way to get ApiPlatformBundle up, running and well integrated with other useful
 tools including [PHP Schema](http://php-schema.dunglas.com), [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle),
-[NelmioCorsBundle](https://github.com/nelmio/NelmioCorsBundle) and [Behat](http://behat.org) is to install [Dunglas's API
-Platform](https://github.com/dunglas/api-platform).
+[NelmioCorsBundle](https://github.com/nelmio/NelmioCorsBundle) and [Behat](http://behat.org) is to install [API Platform Standard Edition](https://github.com/api-platform/api-platform).
 It's a Symfony edition packaged with the best tools to develop a REST API and sensitive default settings.
 
 Alternatively, you can use [Composer](http://getcomposer.org) to install the standalone bundle in your project:
@@ -31,9 +30,8 @@ Register the routes of our API by adding the following lines to `app/config/rout
 
 ```yaml
 api:
-    resource: "."
-    type:     "api_platform"
-    prefix:   "/api" # Optional
+    resource: '.'
+    type:     'api_platform'
 ```
 
 ## Configuring the API
@@ -44,8 +42,8 @@ The first step is to name your API. Add the following lines in `app/config/confi
 
 ```yaml
 api_platform:
-    title:       "Your API name"                    # The title of the API.
-    description: "The full description of your API" # The description of the API.
+    title:       'Your API name'                    # The title of the API.
+    description: 'The full description of your API' # The description of the API.
 ```
 
 The name and the description you give will be accessible through the auto-generated Hydra documentation.
@@ -55,23 +53,67 @@ The name and the description you give will be accessible through the auto-genera
 Here's the complete configuration with the default:
 
 ```yaml
-# Default configuration for extension with alias: "dunglas_api"
 api_platform:
-    title:           "Your API name"                    # Required, the title of the API.
-    description:     "The full description of your API" # Required, the description of the API.
-    supported_formats: ['jsonld']                       # Enabled api formats, first one will be default
-    enable_fos_user: false                              # Enable the FOSUserBundle integration.
+
+    # The title of the API.
+    title:                ~ # Required
+
+    # The description of the API.
+    description:          ~ # Required
+
+    # The list of enabled formats. The first one will be the default.
+    supported_formats:
+
+        # Prototype
+        format:
+            mime_types:           []
+
+    # Specify a name converter to use.
+    name_converter:       null
+
+    # Enable the FOSUserBundle integration.
+    enable_fos_user:      false
+
+    # Enable the Nelmio Api doc integration.
+    enable_nelmio_api_doc:  true
     collection:
-        order_parameter_name: 'order'                   # Name of the query parameter to order results
-        order:       null                               # The default order of results. (supported by Doctrine: ASC and DESC)
+
+        # The default order of results.
+        order:                null
+
+        # The name of the query parameter to order results.
+        order_parameter_name:  order
         pagination:
-            enabled: true                               # Enable pagination
-            page_parameter_name: 'page'                 # The name of the parameter handling the page number.
-            items_per_page: 30                          # The default number of items perm page in collections.
-            client_enabled: false                       # Allow the client to change the number of elements by page.
-            client_items_per_page: 'itemsPerPage'       # TODO: What is this?.
-            enabled_parameter_name: pagination          # Query parameter to enable/disable pagination
-            items_per_page_parameter_name: itemsPerPage # Query parameter to change number of items per page
+
+            # To enable or disable pagination for all resource collections by default.
+            enabled:              true
+
+            # To allow the client to enable or disable the pagination.
+            client_enabled:       false
+
+            # To allow the client to set the number of items per page.
+            client_items_per_page:  false
+
+            # The default number of items per page.
+            items_per_page:       30
+
+            # The default name of the parameter handling the page number.
+            page_parameter_name:  page
+
+            # The name of the query parameter to enable or disable pagination.
+            enabled_parameter_name:  pagination
+
+            # The name of the query parameter to set the number of items per page.
+            items_per_page_parameter_name:  itemsPerPage
+    metadata:
+        resource:
+
+            # Cache service for resource metadata.
+            cache:                api_platform.metadata.resource.cache.array
+        property:
+
+            # Cache service for property metadata.
+            cache:                api_platform.metadata.property.cache.array
 ```
 
 The name and the description you give will be accessible through the auto-generated Hydra documentation.
@@ -172,7 +214,7 @@ services:
 **You're done!**
 
 You now have a fully featured API exposing your Doctrine entities.
-Run the Symfony app (`app/console server:run`) and browse the API entrypoint at `http://localhost:8000/api`.
+Run the Symfony app (`bin/console server:run`) and browse the API entrypoint at `http://localhost:8000/api`.
 
 Interact with the API using a REST client (I recommend [Postman](https://chrome.google.com/webstore/detail/postman-rest-client/fdmmgilgnpjigdojojpjoooidkmcomcm))
 or an Hydra aware application (you should give a try to [Hydra Console](https://github.com/lanthaler/HydraConsole)). Take
