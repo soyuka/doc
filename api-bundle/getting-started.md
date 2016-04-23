@@ -9,7 +9,7 @@ It's a Symfony edition packaged with the best tools to develop a REST API and se
 
 Alternatively, you can use [Composer](http://getcomposer.org) to install the standalone bundle in your project:
 
-`composer require dunglas/api-bundle`
+`composer require api-platform/core`
 
 Then, update your `app/config/AppKernel.php` file:
 
@@ -30,8 +30,9 @@ Register the routes of our API by adding the following lines to `app/config/rout
 
 ```yaml
 api:
-    resource: '.'
-    type:     'api_platform'
+    resource: "."
+    type:     "api"
+    prefix:   "/api" # Optional
 ```
 
 ## Configuring the API
@@ -116,8 +117,6 @@ api_platform:
             cache:                api_platform.metadata.property.cache.array
 ```
 
-The name and the description you give will be accessible through the auto-generated Hydra documentation.
-
 ## Mapping the entities
 
 Imagine you have the following Doctrine entity classes:
@@ -194,22 +193,65 @@ class Offer
 }
 ```
 
-## Registering the services
+## Registering resources
 
-Register the following services (for example in `app/config/services.yml`):
+A resource can be defined through Annotations, Yaml or XML. The following represents the minimal configuration to register a resource for Product and one for Offer. A resource is then represented by REST endpoints called [Operations](operations.md).
+
+<configurations>
+```php
+<?php
+// src/AppBundle/Entity/Product.php
+
+namespace AppBundle\Entity;
+
+use ApiPlatform\Core\Annotation\Resource;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * @ORM\Entity
+ * @Resource
+ */
+class Product
+{
+//...
+}
+
+// src/AppBundle/Entity/Offer.php
+
+namespace AppBundle\Entity;
+
+use ApiPlatform\Core\Annotation\Resource;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+ * @ORM\Entity
+ * @Resource
+ */
+class Offer
+{
+//...
+}
+```
 
 ```yaml
-services:
-    resource.product:
-        parent:    "api.resource"
-        arguments: [ "AppBundle\Entity\Product" ]
-        tags:      [ { name: "api.resource" } ]
+# src/AppBundle/Resources/config/resources.yml
+resources:
+  product:
+    class: 'AppBundle\Entity\Product'
+  offer:
+    class: 'AppBundle\Entity\Offer'
+```
 
     resource.offer:
         parent:    "api.resource"
         arguments: [ "AppBundle\Entity\Offer" ]
         tags:      [ { name: "api.resource" } ]
 ```
+
+
+</configurations>
 
 **You're done!**
 
