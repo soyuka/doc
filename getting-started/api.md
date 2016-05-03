@@ -36,7 +36,7 @@ or MariaDB but other major DBMS are supported including PostgreSQL and SQLite.
 Let's start our new blog API project. The easiest way to create a new project is to use [Composer](https://getcomposer.org/)
 (you need to have it installed on your box):
 
-    composer create-project --dev api-platform/api-platform blog-api
+    composer create-project api-platform/api-platform:dev-master blog-api
 
 Composer creates the skeleton of the new blog API then retrieve the framework and all its dependencies.
 
@@ -47,13 +47,16 @@ API Platform is pre-configured to use the popular and powerful [Doctrine ORM](ht
 It's supported natively by all API Platform components. However the Doctrine ORM is fully optional: you can replace it
 by your favorite ORM, no ORM at all and even no database.
 
-The installer will also ask you for:
+The installer will also ask you for some configuration parameters:
 
-* mail server credentials (to send mails)
-* the URL of your default web client application to automatically set appropriate [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
+* `datanase_*`: database credentials (MySQL is configured by default, but other populars RDBMS are supported)
+* `mailer_*`: mail server credentials (to send mails)
+* `cors_allow_origin`: the URL of your default web client application to automatically set appropriate [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
   headers, **set it to `http://locahost:9000` (the default URL of the built-in Grunt server of our AngularJS client) to follow this tutorial**
-* a name and a description of the API that will be used in the generated documentation
-* a secret token (choose a long one) for cryptographic features
+* `api_*`: a name and a description of the API that will be used in the generated documentation
+* `secret`: a secret token (choose a long one) for cryptographic features
+
+Finally, the installer will ask if you want to remove the existing VCS history, type `Y`.
 
 Take a look at [the content of the generated directory](https://github.com/dunglas/blog-api). You maybe recognize a [Symfony
 application directory structure](https://symfony.com/doc/current/quick_tour/the_architecture.html). It's fine and intended:
@@ -96,7 +99,8 @@ When you're done with the demo app and want to create your own API:
 The first incredibly useful tool provided by API platform is [its data model generator](../schema-generator/index.md).
 
 It is 100% independent of other components but fits well with them: you can use this generator to scaffold the data model
-of any PHP application, and you can expose any hand-crafted PHP data model with the API system. **They are not coupled together.**
+of any PHP application. But you can also expose any hand-crafted PHP data model with the API system.
+**Those components are not coupled together.**
 
 To scaffold our blog data model we'll browse [Schema.org](https://schema.org) and find types matching our needs.
 We're lucky, the [https://schema.org/BlogPosting](https://schema.org/BlogPosting) describes exactly the data model we want
@@ -107,35 +111,39 @@ Report types you're interested in a YAML configuration file like in the followin
 ```yaml
 # app/config/schema.yml
  
-types: # The list of type to generated (a PHP entity class by type will be generated)
-  SocialMediaPosting: ~
-  BlogPosting: ~ # A type to generate a PHP entity class from, including all its properties (here this type has no specific property, they are all inherited)
-  Article: # Schema.org has an inheritance system, we will configure all types of the hierarchy
-    properties: # The list of properties we want to use
+types:                      # The list of type to generated (a PHP entity class by type will be generated)
+  BlogPosting:
+    parent: false           # It's a best practice to have entity without parents
+    properties:             # The list of properties we want to use
+      name: ~               # You can include properties from the current type and of all these parents
       articleBody: ~
       articleSection: ~
-  CreativeWork:
-    properties:
-      author:
-        range: Person # PHP Schema handle relations. Here we force the type of the property to Person
-        cardinality: (*..0) # Force the cardinality of the relation
       headline: ~
       isFamilyFriendly: ~
       datePublished: ~
-  Thing:
+      author:
+        range: Person       # You can specify relations, here we force the type of the property to Person
+        cardinality: (*..0) # We also the cardinality of the relation
+      kevinReview:          # You can also define custom properties, not available in Schema.org
+        range: Text         # For custom properties, type must always be specified
+        cardinality: (*..0) # Using the cardinality here (not a relation) allow to deal with the nullable option
+  Person:                   # Person is a relation of the BlogPosting type (author property), relations will be automatically generated
+    parent: false
     properties:
-      name: ~
-  Person: # Person is a relation of the "CreativeWork" type (property "author"), PHP Schema will generate relations for us
-    properties: {} # We don't want any specific property for a person except "name" inherited from Thing
+      familyName: ~         # We add some common properties defined by Schema.org
+      givenName: ~
+      description: ~
+      birthDate: ~
+      deathDate: ~
 
 namespaces:
   entity: AppBundle\Entity # The default namespace for entities, following API Platform and Symfony best practices
 
-annotationGenerators: # Generators we want to use, keep it as is for standard API Platform projects
-    - ApiPlatform\SchemaGenerator\AnnotationGenerator\PhpDocAnnotationGenerator
-    - ApiPlatform\SchemaGenerator\AnnotationGenerator\DoctrineOrmAnnotationGenerator
-    - ApiPlatform\SchemaGenerator\AnnotationGenerator\ConstraintAnnotationGenerator
-    - ApiPlatform\SchemaGenerator\AnnotationGenerator\ApiPlatformCoreAnnotationGenerator
+annotationGenerators: # Enabled generators
+    - ApiPlatform\SchemaGenerator\AnnotationGenerator\PhpDocAnnotationGenerator          # PHPDoc
+    - ApiPlatform\SchemaGenerator\AnnotationGenerator\DoctrineOrmAnnotationGenerator     # Doctrine ORM mapping
+    - ApiPlatform\SchemaGenerator\AnnotationGenerator\ConstraintAnnotationGenerator      # Symfony Validation Constraints
+    - ApiPlatform\SchemaGenerator\AnnotationGenerator\ApiPlatformCoreAnnotationGenerator # API Platform resource mapping
 ```
 
 The `types` key contains the list of classes we want to generate. Each class will be generated from the corresponding
@@ -144,6 +152,7 @@ Schema.org type.
 Report properties of the class you want to generate in the `properties` key of the type. Similarly PHP properties are
 generated using properties coming from Schema.org. If the value of the `properties` key is null (`~`), all properties
 of the Schema.org type will be generated.
+As you can see with `kevinReview`, it's also possible to define custom properties.
 
 The schema generator is smart enough to guess types (`range` in the Schema.org terminology) and cardinalities of properties.
 Use the `range` and `cardinality` keys if you want to override those values.
@@ -157,12 +166,12 @@ The last one is only useful to generate Schema.org IRI when exposing the API ins
 expose a Schema.org enabled API, you can remove this generator. You can also create you own annotation generators and register them in this configuration section.
 
 If you don't find types or properties matching your specific needs, it's not a big deal. You can create entity classes
-by yourself and still benefit from the bunch of other API Platform features.
+by yourself (directly in PHP) and still benefit from the bunch of other API Platform features.
 You can also pick some classes and properties from Schema.org then add more custom types to your model.
 
 It's time to run the model generator:
 
-    $ bin/schema generate-types src/ app/config/schema.yml
+    $ vendor/bin/schema generate-types src/ app/config/schema.yml
 
 Take a look at the content of the [src/AppBundle/Entity/](https://github.com/dunglas/blog-api/tree/master/src/AppBundle/Entity) directory.
 We generated a set of Plain-Old-PHP entities representing our data model. As promised we generated:
@@ -208,12 +217,12 @@ and process data from any website or app using such technologies.
 
 Ask Doctrine to create the database of the project:
 
-    app/console doctrine:database:drop # Just in case you created the DB to play with the bookstore app
-    app/console doctrine:database:create
+    $ bin/console doctrine:database:drop --force # Just in case you created the DB to play with the bookstore app, be careful with this command it deletes data permanently
+    $ bin/console doctrine:database:create
 
 Then generate database tables related to the generated entities:
 
-    app/console doctrine:schema:create
+    $ bin/console doctrine:schema:create
 
 The schema generator provides a lot of configuration options. Take a look at [its dedicated documentation](../schema-generator/index.md).
 Keep in mind that it is also available as a standalone tool (PHAR) and can be used to bootstrap any PHP project (works fine
@@ -225,14 +234,14 @@ the generator.
 Sometimes we will have to make a data model with very specific business types, not available in Schema.org. Sometimes we
 will find Schema.org types that partially matches what we want but needs to be adapted.
 
-Anyway, PHP Schema is a tool intended **to bootstrap** the data model. You can and **you will** edit manually generated
-PHP entities. When you start to edit manually the generated files, be careful to not run the generator again, it will
-overwrite your changes (this behavior will be enhanced in future versions). When you do such things, the best to do is to
-remove `api-platform/schema-generator` from your `composer.json` file.
+Anyway, the schema generator is a tool intended **to bootstrap** the data model. You can and **you will** edit manually
+generated PHP entities. When you start to edit manually the generated files, be careful to not run the generator again,
+it will overwrite your changes (this behavior will be enhanced in future versions). When you do such things, the best to
+do is to remove `api-platform/schema-generator` from your `composer.json` file.
 
 ## Exposing the API
 
-We have a working data model backed by a database. But we also got a working hypermedia REST API thanks to **[API Platform Core](../api-bundle/index.md)**.
+We have a working data model backed by a database. But we also got a working hypermedia REST API thanks to **[API Platform Core](../core/index.md)**.
 
 The core, like the schema generator, is already pre-installed and properly configured.
 We just need to mark resources we want to expose with an `@Resource` annotation. Open any of the generated entities, and
@@ -240,7 +249,13 @@ you'll see that the schema generator already added this annotation for us.
 
 And our API is already finished! How would it be easier?
 
-Start the integrated development web server: `app/console server:start`
+When you create new entities, you need to clear the cache:
+
+    $ bin/console cache:clear
+
+Start the integrated development web server:
+
+    $ bin/console server:start
 
 Then open `http://localhost:8000/doc` with a web browser:
 
@@ -266,48 +281,61 @@ It's as easy as it looks.
 
 ## Trying the API
 
-Add a person named Kévin by issuing a POST request on `http://localhost:8000/people` with the following JSON document as
+Add a person named Olivier Lenancker by issuing a POST request on `http://localhost:8000/people` with the following JSON document as
 raw body:
 
 ```json
-{"name": "Kévin"}
-```
-
-The data is inserted in database. The server replies with a JSON-LD representation of the freshly created resource. Thanks to PHP Schema, the `@type` property of the JSON-LD document is referencing a Schema.org type:
-
-```json
 {
-    "@context": "/contexts/Person",
-    "@id": "/people/1",
-    "@type": "http://schema.org/Person",
-    "name": "Kévin"
+  "familyName": "Lenancker",
+  "givenName": "Olivier",
+  "description": "A famous author from the North.",
+  "birthDate": "666-06-06"
 }
 ```
 
-The JSON-LD spec is fully supported by the bundle. Want a proof? Browse `http://localhost:8000/contexts/Person`.
+As you can see, we omitted some optional properties such as `description` and `deathDate`.
+
+The data is inserted in database. The server replies with a JSON-LD representation of the freshly created resource.
+Thanks to the schema generator, the `@type` property of the JSON-LD document is referencing a Schema.org type:
+
+```json
+{
+  "@context": "/contexts/Person",
+  "@id": "/people/1",
+  "@type": "http://schema.org/Person",
+  "birthDate": "0666-06-06T00:00:00+00:00",
+  "deathDate": null,
+  "description": "A famous author from the North.",
+  "familyName": "Lenancker",
+  "givenName": "Olivier"
+}
+```
+
+The JSON-LD spec is fully supported by API Platform. Want a proof? Browse `http://localhost:8000/contexts/Person`.
 
 By default, the API allows `GET` (retrieve, on collections and items), `POST` (create), `PUT` (update) and `DELETE` (self-explaining)
-HTTP methods. [You can add and remove any other operation you want](../api-bundle/operations.md).
+HTTP methods. [You can add and remove any other operation you want](../core/operations.md).
 Try it!
 
 Now, browse `http://localhost:8000/people`:
 
 ```json
 {
-    "@context": "/contexts/Person",
-    "@id": "/people",
-    "@type": "hydra:PagedCollection",
-    "hydra:totalItems": 1,
-    "hydra:itemsPerPage": 30,
-    "hydra:firstPage": "/people",
-    "hydra:lastPage": "/people",
-    "hydra:member": [
-        {
-            "@id": "/people/1",
-            "@type": "http://schema.org/Person",
-            "name": "Kévin"
-        }
-    ]
+  "@context": "/contexts/Person",
+  "@id": "/people",
+  "@type": "hydra:Collection",
+  "hydra:member": [
+    {
+      "@id": "/people/1",
+      "@type": "http://schema.org/Person",
+      "birthDate": "0666-06-06T00:00:00+00:00",
+      "deathDate": null,
+      "description": "A famous author from the North.",
+      "familyName": "Lenancker",
+      "givenName": "Olivier"
+    }
+  ],
+  "hydra:totalItems": 1
 }
 ```
 
@@ -318,32 +346,33 @@ as body:
 
 ```json
 {
-    "name": "API Platform is great",
-    "headline": "You'll love that framework!",
-    "articleBody": "The body of my article.",
-    "articleSection": "technology",
-    "author": "/people/1",
-    "isFamilyFriendly": "maybe",
-    "datePublished": "2015-05-11"
+  "name": "API Platform is great",
+  "headline": "You'll love that framework!",
+  "articleBody": "The body of my article.",
+  "articleSection": "technology",
+  "author": "/people/1",
+  "isFamilyFriendly": "maybe",
+  "datePublished": "2015-05-11",
+  "kevinReview": "nice"
 }
 ```
 
-Oops... the `isFamilyFriendly` property is a boolean. Our JSON contains an incorrect string. Fortunately the bundle is smart
-enough to detect the error: it uses Symfony validation annotations generated by PHP Schema previously. It returns a detailed
-error message in the Hydra error serialization format:
+Oops... the `isFamilyFriendly` property is a boolean. Our JSON contains an incorrect type value (a `string`).
+Fortunately API Platform is smart enough to detect the error: it uses Symfony validation constraints generated previously.
+It returns a detailed error message in the Hydra error serialization format:
 
 ```json
 {
-    "@context": "/contexts/ConstraintViolationList",
-    "@type": "ConstraintViolationList",
-    "hydra:title": "An error occurred",
-    "hydra:description": "isFamilyFriendly: This value should be of type boolean.\n",
-    "violations": [
-        {
-            "propertyPath": "isFamilyFriendly",
-            "message": "This value should be of type boolean."
-        }
-    ]
+  "@context": "/contexts/ConstraintViolationList",
+  "@type": "ConstraintViolationList",
+  "hydra:title": "An error occurred",
+  "hydra:description": "isFamilyFriendly: This value should be of type boolean.",
+  "violations": [
+    {
+      "propertyPath": "isFamilyFriendly",
+      "message": "This value should be of type boolean."
+    }
+  ]
 }
 ```
 
@@ -351,13 +380,14 @@ Correct the body and send the request again:
 
 ```json
 {
-    "name": "API Platform is great",
-    "headline": "You'll love that framework!",
-    "articleBody": "The body of my article.",
-    "articleSection": "technology",
-    "author": "/people/1",
-    "isFamilyFriendly": true,
-    "datePublished": "2015-05-11"
+  "name": "API Platform is great",
+  "headline": "You'll love that framework!",
+  "articleBody": "The body of my article.",
+  "articleSection": "technology",
+  "author": "/people/1",
+  "isFamilyFriendly": true,
+  "datePublished": "2015-05-11",
+  "kevinReview": "nice"
 }
 ```
 
@@ -381,19 +411,18 @@ Open an URL of the API with it you'll get a nice management interface.
 
 ![Hydra console](images/console.png)]
 
-You can also give a try to the brand new [hydra-core Javascript library](https://github.com/bergos/hydra-core).
+You can also give a try to the [hydra-core Javascript library](https://github.com/bergos/hydra-core).
 
-ApiBundle offers a lot of other features including:
+API Platform offers a lot of other features including:
 
-* [filters](../api-bundle/filters.md)
-* [serialization groups and child resource embedding](../api-bundle/serialization-groups-and-relations.md)
-* [custom operations](../api-bundle/operations.md): deactivate
-  some methods, create custom operations, URL and controllers
-* [data providers](../api-bundle/data-providers.md): retrieve and
-  modify data trough a web-service or a MongoDB database or anything else instead of Doctrine ORM
-* a powerful [event system](../api-bundle/the-event-system.md)
+* [filters](../core/filters.md)
+* [serialization groups and child resource embedding](../core/serialization-groups-and-relations.md)
+* [data providers](../core/data-providers.md): retrieve and modify data trough a web-service or a MongoDB database or anything
+  else instead of Doctrine ORM
+* [custom operations](../core/operations.md): deactivate some methods, create custom operations, URL and controllers
+* a powerful [event system](../core/the-event-system.md)
 
-Read [its dedicated documentation](../api-bundle/index.md) to see how to leverage them and how to
+Read [its dedicated documentation](../core/index.md) to see how to leverage them and how to
 hook your own code everywhere into it.
 
 ## Specifying and testing the API
@@ -408,6 +437,8 @@ Create a [Gherkin](http://docs.behat.org/en/latest/guides/1.gherkin.html) featur
 in the previous chapter:
 
 ```gherkin
+# features/blog.feature
+
 Feature: Blog
   In order to post news
   As a client software developer
@@ -418,7 +449,12 @@ Feature: Blog
   Scenario: Create a person
     When I send a "POST" request to "/people" with body:
     """
-    {"name": "Kévin"}
+    {
+      "familyName": "Lenancker",
+      "givenName": "Olivier",
+      "description": "A famous author from the North.",
+      "birthDate": "666-06-06"
+    }
     """
     Then the response status code should be 201
     And the response should be in JSON
@@ -429,7 +465,11 @@ Feature: Blog
       "@context": "/contexts/Person",
       "@id": "/people/1",
       "@type": "http://schema.org/Person",
-      "name": "Kévin"
+      "birthDate": "0666-06-06T00:00:00+00:00",
+      "deathDate": null,
+      "description": "A famous author from the North.",
+      "familyName": "Lenancker",
+      "givenName": "Olivier"
     }
     """
 
@@ -443,18 +483,19 @@ Feature: Blog
     {
       "@context": "/contexts/Person",
       "@id": "/people",
-      "@type": "hydra:PagedCollection",
-      "hydra:totalItems": 1,
-      "hydra:itemsPerPage": 30,
-      "hydra:firstPage": "/people",
-      "hydra:lastPage": "/people",
+      "@type": "hydra:Collection",
       "hydra:member": [
-          {
-              "@id": "/people/1",
-              "@type": "http://schema.org/Person",
-              "name": "Kévin"
-          }
-      ]
+        {
+          "@id": "/people/1",
+          "@type": "http://schema.org/Person",
+          "birthDate": "0666-06-06T00:00:00+00:00",
+          "deathDate": null,
+          "description": "A famous author from the North.",
+          "familyName": "Lenancker",
+          "givenName": "Olivier"
+        }
+      ],
+      "hydra:totalItems": 1
     }
     """
 
@@ -462,13 +503,14 @@ Feature: Blog
     When I send a "POST" request to "/blog_postings" with body:
     """
     {
-        "name": "API Platform is great",
-        "headline": "You'll that framework!",
-        "articleBody": "The body of my article.",
-        "articleSection": "technology",
-        "author": "/people/1",
-        "isFamilyFriendly": "maybe",
-        "datePublished": "2015-05-11"
+      "name": "API Platform is great",
+      "headline": "You'll love that framework!",
+      "articleBody": "The body of my article.",
+      "articleSection": "technology",
+      "author": "/people/1",
+      "isFamilyFriendly": "maybe",
+      "datePublished": "2015-05-11",
+      "kevinReview": "nice"
     }
     """
     Then the response status code should be 400
@@ -477,16 +519,16 @@ Feature: Blog
     And the JSON should be equal to:
     """
     {
-        "@context": "/contexts/ConstraintViolationList",
-        "@type": "ConstraintViolationList",
-        "hydra:title": "An error occurred",
-        "hydra:description": "isFamilyFriendly: This value should be of type boolean.\n",
-        "violations": [
-            {
-                "propertyPath": "isFamilyFriendly",
-                "message": "This value should be of type boolean."
-            }
-        ]
+      "@context": "/contexts/ConstraintViolationList",
+      "@type": "ConstraintViolationList",
+      "hydra:title": "An error occurred",
+      "hydra:description": "isFamilyFriendly: This value should be of type boolean.",
+      "violations": [
+        {
+          "propertyPath": "isFamilyFriendly",
+          "message": "This value should be of type boolean."
+        }
+      ]
     }
     """
 
@@ -496,19 +538,19 @@ Feature: Blog
     When I send a "POST" request to "/blog_postings" with body:
     """
     {
-        "name": "API Platform is great",
-        "headline": "You'll that framework!",
-        "articleBody": "The body of my article.",
-        "articleSection": "technology",
-        "author": "/people/1",
-        "isFamilyFriendly": true,
-        "datePublished": "2015-05-11"
+      "name": "API Platform is great",
+      "headline": "You'll love that framework!",
+      "articleBody": "The body of my article.",
+      "articleSection": "technology",
+      "author": "/people/1",
+      "isFamilyFriendly": true,
+      "datePublished": "2015-05-11",
+      "kevinReview": "nice"
     }
     """
     Then the response status code should be 201
     And the response should be in JSON
     And the header "Content-Type" should be equal to "application/ld+json"
-    And print last JSON response
     And the JSON should be equal to:
     """
     {
@@ -518,10 +560,11 @@ Feature: Blog
       "articleBody": "The body of my article.",
       "articleSection": "technology",
       "author": "/people/1",
-      "datePublished": "2015-05-11T00:00:00+02:00",
-      "headline": "You'll that framework!",
+      "datePublished": "2015-05-11T00:00:00+00:00",
+      "headline": "You'll love that framework!",
       "isFamilyFriendly": true,
-      "name": "API Platform is great"
+      "name": "API Platform is great",
+      "kevinReview": "nice"
     }
     """
 ```
@@ -547,7 +590,7 @@ more documentation and cookbooks are coming!
 
 Here is a non exhaustive list of what you can do with API Platform:
 
-* Add [a user management system](../api-bundle/fosuser-bundle.md)
+* Add [a user management system](../core/fosuser-bundle.md)
   (FOSUser integration)
 * [Secure the API with JWT](https://github.com/lexik/LexikJWTAuthenticationBundle) (LexikJwtAuthenticationBundle) or [OAuth](https://github.com/FriendsOfSymfony/FOSOAuthServerBundle)
   (FosOAuthServer)
