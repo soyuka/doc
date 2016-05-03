@@ -1,9 +1,9 @@
 # Getting started
 
-## Installing ApiPlatformBundle
+## Installing API Platform
 
-If you are starting a new project, the easiest way to get ApiPlatformBundle up, running and well integrated with other useful
-tools including [PHP Schema](http://php-schema.dunglas.com), [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle),
+If you are starting a new project, the easiest way to get API Platform up, running and well integrated with other useful
+tools including [the schema generator](../schema-generator/), [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle),
 [NelmioCorsBundle](https://github.com/nelmio/NelmioCorsBundle) and [Behat](http://behat.org) is to install [API Platform Standard Edition](https://github.com/api-platform/api-platform).
 It's a Symfony edition packaged with the best tools to develop a REST API and sensitive default settings.
 
@@ -30,9 +30,9 @@ Register the routes of our API by adding the following lines to `app/config/rout
 
 ```yaml
 api:
-    resource: "."
-    type:     "api"
-    prefix:   "/api" # Optional
+    resource: '.'
+    type:     'api'
+    prefix:   '/api' # Optional
 ```
 
 ## Configuring the API
