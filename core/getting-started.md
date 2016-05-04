@@ -244,13 +244,6 @@ resources:
     class: 'AppBundle\Entity\Offer'
 ```
 
-    resource.offer:
-        parent:    "api.resource"
-        arguments: [ "AppBundle\Entity\Offer" ]
-        tags:      [ { name: "api.resource" } ]
-```
-
-
 </configurations>
 
 **You're done!**

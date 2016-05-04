@@ -109,7 +109,7 @@ the `/products/{id}/custom` URL. When this URL is opened, the `my_custom_control
 
 If you want to disable operations, you need to declare operations in your configuration.
 
-The following `Resource` definition exposes a `GET` operation for it's collection but not the `POST` one:
+The following `Resource` definition exposes a `GET` operation for its collection but not the `POST` one:
 
 <configurations>
 ```yaml

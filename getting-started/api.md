@@ -49,7 +49,7 @@ by your favorite ORM, no ORM at all and even no database.
 
 The installer will also ask you for some configuration parameters:
 
-* `datanase_*`: database credentials (MySQL is configured by default, but other populars RDBMS are supported)
+* `database_*`: database credentials (MySQL is configured by default, but other popular RDBMS are supported)
 * `mailer_*`: mail server credentials (to send mails)
 * `cors_allow_origin`: the URL of your default web client application to automatically set appropriate [CORS](http://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
   headers, **set it to `http://locahost:9000` (the default URL of the built-in Grunt server of our AngularJS client) to follow this tutorial**
