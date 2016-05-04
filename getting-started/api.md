@@ -126,7 +126,7 @@ types:                      # The list of type to generated (a PHP entity class 
         cardinality: (*..0) # We also the cardinality of the relation
       kevinReview:          # You can also define custom properties, not available in Schema.org
         range: Text         # For custom properties, type must always be specified
-        cardinality: (*..0) # Using the cardinality here (not a relation) allow to deal with the nullable option
+        cardinality: (*..0) # Using the cardinality here (not a relation) allows to deal with the nullable option
   Person:                   # Person is a relation of the BlogPosting type (author property), relations will be automatically generated
     parent: false
     properties:
