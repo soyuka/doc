@@ -39,8 +39,8 @@ services:
 
 namespace AppBundle\Entity;
 
-use ApiPlatform\Core\Annotation\Property;
-use ApiPlatform\Core\Annotation\Resource;
+use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -50,7 +50,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @see http://schema.org/Offer Documentation on Schema.org
  *
  * @ORM\Entity
- * @Resource(attributes={"filters"={"offer.search"}},iri="http://schema.org/Offer")
+ * @ApiResource(attributes={"filters"={"offer.search"}},iri="http://schema.org/Offer")
  */
 class Offer
 {
@@ -114,8 +114,8 @@ services:
 
 namespace AppBundle\Entity;
 
-use ApiPlatform\Core\Annotation\Property;
-use ApiPlatform\Core\Annotation\Resource;
+use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -125,7 +125,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @see http://schema.org/Offer Documentation on Schema.org
  *
  * @ORM\Entity
- * @Resource(attributes={"filters"={"offer.search","offer.date"}},iri="http://schema.org/Offer")
+ * @ApiResource(attributes={"filters"={"offer.search","offer.date"}},iri="http://schema.org/Offer")
  */
 class Offer
 {
@@ -188,8 +188,8 @@ services:
 
 namespace AppBundle\Entity;
 
-use ApiPlatform\Core\Annotation\Property;
-use ApiPlatform\Core\Annotation\Resource;
+use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -199,7 +199,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @see http://schema.org/Offer Documentation on Schema.org
  *
  * @ORM\Entity
- * @Resource(attributes={"filters"={"offer.search","offer.date","offer.order"}},iri="http://schema.org/Offer")
+ * @ApiResource(attributes={"filters"={"offer.search","offer.date","offer.order"}},iri="http://schema.org/Offer")
  */
 class Offer
 {
@@ -253,8 +253,8 @@ services:
 
 namespace AppBundle\Entity;
 
-use ApiPlatform\Core\Annotation\Property;
-use ApiPlatform\Core\Annotation\Resource;
+use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -264,7 +264,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @see http://schema.org/Offer Documentation on Schema.org
  *
  * @ORM\Entity
- * @Resource(attributes={"filters"={"offer.search","offer.date","offer.boolean"}},iri="http://schema.org/Offer")
+ * @ApiResource(attributes={"filters"={"offer.search","offer.date","offer.boolean"}},iri="http://schema.org/Offer")
  */
 class Offer
 {
@@ -303,8 +303,8 @@ services:
 
 namespace AppBundle\Entity;
 
-use ApiPlatform\Core\Annotation\Property;
-use ApiPlatform\Core\Annotation\Resource;
+use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -314,7 +314,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @see http://schema.org/Offer Documentation on Schema.org
  *
  * @ORM\Entity
- * @Resource(attributes={"filters"={"offer.search","offer.date","offer.boolean","offer.numeric"}},iri="http://schema.org/Offer")
+ * @ApiResource(attributes={"filters"={"offer.search","offer.date","offer.boolean","offer.numeric"}},iri="http://schema.org/Offer")
  */
 class Offer
 {
