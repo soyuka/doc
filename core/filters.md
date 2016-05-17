@@ -20,6 +20,8 @@ The search filter supports exact and partial matching strategies.
 If the partial strategy is specified, an SQL query with a `WHERE` clause similar
 to `LIKE %text to search%` will be automatically issued.
 
+If you need case insensitive search, prefix the strategy with the letter `i`, for example `ipartial` will generate the sql clause `WHERE LOWER(property) LIKE LOWER(%binded%)`. Don't forget to use function indexes or you'll hit performance issues!
+
 In the following, we will see how to allow filtering a list of e-commerce offers:
 
 ```yaml
