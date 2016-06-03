@@ -6,7 +6,7 @@ If you are starting a new project, the easiest way to get API Platform up is to 
 It ships with the API Platform Core library integrated with [the Symfony framework](https://symfony.com), [the schema generator](../schema-generator/),
 [Doctrine ORM](www.doctrine-project.org), [NelmioApiDocBundle](https://github.com/nelmio/NelmioApiDocBundle), [NelmioCorsBundle](https://github.com/nelmio/NelmioCorsBundle)
 and [Behat](http://behat.org).
-It's basically a Symfony edition packaged with the best tools to develop a REST API and sensitive default settings.
+Basically, it's  a Symfony edition packaged with the best tools to develop a REST API and sensitive default settings.
 
 Alternatively, you can use [Composer](http://getcomposer.org) to install the standalone bundle in an existing Symfony project:
 
@@ -38,7 +38,7 @@ api:
 
 ## Before reading this documentation
 
-If you haven't already done it, take a look at [the "Creating your first API with API Platform, in 5 minutes" guide](../getting-started/api.md).
+If you haven't read it already, take a look at [the "Creating your first API with API Platform, in 5 minutes" guide](../getting-started/api.md).
 Using the schema generator is not necessary to use API Platform Core. But the "Exposing the API" section of this tutorial
 covers basic concepts required to understand how API Platform works including how it implements the REST pattern and what
 JSON-LD and Hydra formats are.
@@ -128,10 +128,9 @@ api_platform:
 ## Mapping the entities
 
 API Platform Core is able to automatically expose entities mapped as "API resources" through a REST API supporting CRUD operations.
-Docblock annotations, XML and YAML configuration files can be used to indicate to API Platform Core entities that must be
-exposed.
+To setup entities which are exposed, you can use Docblock annotations, XML and YAML configuration files.
 
-Here is an example of entities mapped using annotations that will be exposed trough a REST API:
+Here is an example of entities mapped using annotations which will be exposed trough a REST API:
 
 ```php
 <?php
@@ -237,7 +236,8 @@ PUT    | /products/{id} | Update a product
 DELETE | /products/{id} | Delete a product
 
 The same operations are available for the offer method (routes will start with the `/offers` pattern).
-The prefix of the routes are build by pluralizing the name of the mapped entity class.
+Routes prefixes are built by pluralizing the name of the mapped entity class.
+It is also possible to use overwrite the naming convention using [resource path generators](resource-path-generators.md).
 
 Alternatively to annotations, you can map entity classes using XML or YAML:
 
