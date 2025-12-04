@@ -1660,6 +1660,10 @@ final class MyComplexFilter implements FilterInterface, OpenApiParameterFilterIn
 
 ### Creating Custom Doctrine ORM Filters With The Old Syntax (API Platform < 4.2)
 
+> [!WARNING]
+> This section describes the **deprecated** way of creating custom filters using `AbstractFilter` and `#[ApiFilter]`.
+> It is strongly recommended to use the [new syntax for custom filters](#creating-custom-doctrine-orm-filters-with-the-new-syntax-api-platform--42)
+> with `FilterInterface` and `#[QueryParameter]` for maximum flexibility and future compatibility.
 
 API Platform includes a convenient abstract class implementing this interface and providing utility methods: `ApiPlatform\Doctrine\Orm\Filter\AbstractFilter`.
 
@@ -1673,193 +1677,111 @@ library. This library must be properly installed and registered to use this exam
 
 namespace App\Filter;
 
-use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
+use ApiPlatform\Doctrine\Common\Filter\OpenApiFilterTrait;
+use ApiPlatform\Doctrine\Orm\Filter\FilterInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
+use ApiPlatform\Metadata\BackwardCompatibleFilterDescriptionTrait;
+use ApiPlatform\Metadata\JsonSchemaFilterInterface;
+use ApiPlatform\Metadata\OpenApiParameterFilterInterface;
 use ApiPlatform\Metadata\Operation;
+use ApiPlatform\Metadata\Parameter;
 use Doctrine\ORM\QueryBuilder;
-use Symfony\Component\PropertyInfo\Type;
-use ApiPlatform\OpenApi\Model\Parameter;
 
-final class RegexpFilter extends AbstractFilter
+final class RegexpFilter implements FilterInterface, JsonSchemaFilterInterface, OpenApiParameterFilterInterface
 {
-    protected function filterProperty(string $property, $value, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, Operation $operation = null, array $context = []): void
+    use BackwardCompatibleFilterDescriptionTrait;
+    use OpenApiFilterTrait;
+
+    public function apply(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void
     {
-        // Otherwise filter is applied to order and page as well
-        if (
-            !$this->isPropertyEnabled($property, $resourceClass) ||
-            !$this->isPropertyMapped($property, $resourceClass)
-        ) {
+        $parameter = $context['parameter'] ?? null;
+
+        if (!$parameter instanceof Parameter || null === $parameter->getValue()) {
             return;
         }
 
-        $parameterName = $queryNameGenerator->generateParameterName($property); // Generate a unique parameter name to avoid collisions with other filters
+        $value = $parameter->getValue();
+        $property = $parameter->getProperty();
+
+        if (null === $property) {
+            return;
+        }
+
+        $alias = $queryBuilder->getRootAliases()[0];
+        $parameterName = $queryNameGenerator->generateParameterName($property);
+
         $queryBuilder
-            ->andWhere(sprintf('REGEXP(o.%s, :%s) = 1', $property, $parameterName))
+            ->andWhere(sprintf('REGEXP(%s.%s, :%s) = 1', $alias, $property, $parameterName))
             ->setParameter($parameterName, $value);
     }
 
-    // This function is only used to hook in documentation generators (supported by Swagger and Hydra)
-    public function getDescription(string $resourceClass): array
+    public function getSchema(Parameter $parameter): array
     {
-        if (!$this->properties) {
-            return [];
-        }
-
-        $description = [];
-        foreach ($this->properties as $property => $strategy) {
-            $description["regexp_$property"] = [
-                'property' => $property,
-                'type' => Type::BUILTIN_TYPE_STRING,
-                'required' => false,
-                'description' => 'Filter using a regex. This will appear in the OpenApi documentation!',
-                'openapi' => new Parameter(
-                    name: $property,
-                    in: 'query',
-                    allowEmptyValue: true,
-                    explode: false, // to be true, the type must be Type::BUILTIN_TYPE_ARRAY, ?product=blue,green will be ?product=blue&product=green
-                    allowReserved: false, // if true, query parameters will be not percent-encoded
-                    example: 'Custom example that will be in the documentation and be the default value of the sandbox',
-                ),
-            ];
-        }
-
-        return $description;
+        return [
+            'type' => 'string',
+            'pattern' => '.*',
+            'description' => $parameter->getDescription() ?? 'Filter using a regex.',
+            'example' => '^[Found]',
+        ];
     }
 }
 ```
 
-Thanks to [Symfony's automatic service loading](https://symfony.com/doc/current/service_container.html#service-container-services-load-example), which is enabled by default in the API Platform distribution, the filter is automatically registered as a service!
+Thanks to [Symfony\'s automatic service loading](https://symfony.com/doc/current/service_container.html#service-container-services-load-example), which is enabled by default in the API Platform distribution, the filter is automatically registered as a service!
 
-Finally, add this filter to resources you want to be filtered by using the `ApiFilter` attribute:
+Then, associate this filter with your resource using the `QueryParameter` attribute:
 
 ```php
 <?php
-// api/src/Entity/Offer.php
+// api/src/Entity/Book.php
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Filter\RegexpFilter;
+use Doctrine\ORM\Mapping as ORM;
 
-#[ApiResource]
-#[ApiFilter(RegexpFilter::class)]
-class Offer
+#[ORM\Entity]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            parameters: [
+                'titleRegexp' => new QueryParameter(
+                    filter: new RegexpFilter(),
+                    property: 'title',
+                    description: 'Filter by title using a regex'
+                ),
+                'authorRegexp' => new QueryParameter(
+                    filter: new RegexpFilter(),
+                    property: 'author',
+                    description: 'Filter by author using a regex'
+                ),
+            ]
+        ),
+    ]
+)]
+class Book
 {
-    // ...
+    #[ORM\Column(type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    private $id;
+
+    #[ORM\Column]
+    public string $title;
+
+    #[ORM\Column]
+    public string $author;
 }
 ```
 
-You can now use this filter in the URL like `http://example.com/offers?regexp_email=^[FOO]`. This new filter will also
+You can now use this filter in the URL like `http://example.com/books?titleRegexp=^[FOO]`. This new filter will also
 appear in OpenAPI and Hydra documentations.
 
-In the previous example, the filter can be applied to any property. You can also apply this filter on a specific property:
-
-```php
-<?php
-// api/src/Entity/Offer.php
-namespace App\Entity;
-
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Metadata\ApiResource;
-use App\Filter\RegexpFilter;
-
-#[ApiResource]
-class Offer
-{
-    // ...
-
-    #[ApiFilter(RegexpFilter::class)]
-    public string $name;
-}
-```
-
-When creating a custom filter you can specify multiple properties of a resource using the usual filter syntax:
-
-```php
-<?php
-// api/src/Entity/Offer.php
-
-namespace App\Entity;
-
-use ApiPlatform\Core\Annotation\ApiFilter;
-use ApiPlatform\Core\Annotation\ApiResource;
-use App\Filter\CustomAndFilter;
-
-#[ApiResource]
-#[ApiFilter(CustomAndFilter::class, properties: ['name', 'cost'])]
-class Offer
-{
-    // ...
-    public string $name;
-    public int $cost;
-}
-```
-
-These properties can then be accessed in the custom filter like this:
-
-```php
-// api/src/Filter/CustomAndFilter.php
-
-protected function filterProperty(string $property, $value, QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, Operation $operation = null, array $context = []): void {
-  $rootAlias = $queryBuilder->getRootAliases()[0];
-  foreach(array_keys($this->getProperties()) as $prop) { // we use array_keys() because getProperties() returns a map of property => strategy
-      if (!$this->isPropertyEnabled($prop, $resourceClass) || !$this->isPropertyMapped($prop, $resourceClass)) {
-          return;
-      }
-      $parameterName = $queryNameGenerator->generateParameterName($prop);
-      $queryBuilder
-          ->andWhere(sprintf('%s.%s LIKE :%s', $rootAlias, $prop, $parameterName))
-          ->setParameter($parameterName, "%" . $value . "%");
-  }
-}
-```
-
-### Manual Service and Attribute Registration
-
-If you don't use Symfony's automatic service loading, you have to register the filter as a service by yourself.
-Use the following service definition (remember, by default, this isn't needed!):
-
-```yaml
-# api/config/services.yaml
-services:
-  # ...
-  # This whole definition can be omitted if automatic service loading is enabled
-  'App\Filter\RegexpFilter':
-    # The "arguments" key can be omitted if the autowiring is enabled
-    arguments: ['@doctrine', '@?logger']
-    # The "tags" key can be omitted if the autoconfiguration is enabled
-    tags: ['api_platform.filter']
-```
-
-In the previous example, the filter can be applied to any property. However, thanks to the `AbstractFilter` class,
-it can also be enabled for some properties:
-
-```yaml
-# api/config/services.yaml
-services:
-  'App\Filter\RegexpFilter':
-    arguments: ['@doctrine', '@?logger', { email: ~, anOtherProperty: ~ }]
-    tags: ['api_platform.filter']
-```
-
-Finally, if you don't want to use the `#[ApiFilter]` attribute, you can register the filter on an API resource class using the `filters` attribute:
-
-```php
-<?php
-// api/src/Entity/Offer.php
-namespace App\Entity;
-
-use ApiPlatform\Metadata\ApiResource;
-use App\Filter\RegexpFilter;
-
-#[ApiResource(
-    filters: [RegexpFilter::class]
-)]
-class Offer
-{
-    // ...
-}
-```
+This new example demonstrates the recommended way to apply the filter to specific properties (`title` and `author`) by
+defining individual `QueryParameter` attributes for each, explicitly linking them to the `RegexpFilter` and the
+respective properties.
 
 ## Creating Custom Doctrine MongoDB ODM Filters
 
