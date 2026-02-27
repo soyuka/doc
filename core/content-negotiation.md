@@ -410,6 +410,60 @@ use ApiPlatform\Laravel\Eloquent\Filter\JsonApi\SortFilter;
 class Book extends Model {}
 ```
 
+### JSON:API Spec-Compliant Resource Identifiers
+
+By default, API Platform uses the IRI (e.g., `"/api/dummies/10"`) as the `id` field in
+JSON:API responses. The [JSON:API specification](https://jsonapi.org/format/#document-resource-object-identification)
+requires `id` to be an opaque string and relies on `type` + `id` for resource
+identification — not a URL.
+
+API Platform 4.3 adds a `use_iri_as_id` configuration option under `api_platform.jsonapi`.
+Set it to `false` to switch to entity identifiers:
+
+```yaml
+# config/packages/api_platform.yaml
+api_platform:
+    jsonapi:
+        use_iri_as_id: false
+```
+
+With this setting, responses use the entity identifier as `id` and place the IRI in
+`data.links.self`:
+
+```json
+{
+    "data": {
+        "id": "10",
+        "type": "Dummy",
+        "links": {
+            "self": "/api/dummies/10"
+        },
+        "attributes": {
+            "name": "Hello"
+        },
+        "relationships": {
+            "relatedDummy": {
+                "data": {
+                    "id": "1",
+                    "type": "RelatedDummy",
+                    "links": {
+                        "self": "/api/related_dummies/1"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+Denormalization also accepts entity identifiers in request bodies when this option is
+enabled.
+
+The default remains `true` for backwards compatibility. The `true` default is deprecated
+as of API Platform 4.4 and the option will be removed in 5.0, where entity identifiers
+become the only supported mode. See the [upgrade guide](upgrade-guide.md#api-platform-43)
+for migration guidance.
+
 ### Advertising Linked Data Platform HTTP Headers (Allow & Accept-Post)
 
 API Platform automatically adds two HTTP headers to responses for resources:

@@ -1,5 +1,93 @@
 # Upgrade Guide
 
+## API Platform 4.3
+
+### Hydra Documentation Exposes All ApiResource Declarations
+
+Previously, when a class had multiple `#[ApiResource]` attributes, only the first one was exposed
+in the Hydra documentation and entrypoint. Now **all** `ApiResource` declarations are iterated
+and exposed in both the Hydra documentation and the entrypoint.
+
+If you have multiple `#[ApiResource]` on the same entity class, clients consuming the Hydra
+documentation may see additional classes and entrypoint properties that were previously hidden.
+
+### Hydra Class Identifiers Use Short Name
+
+Hydra documentation classes now consistently use `#ShortName` as their `@id` instead of
+schema.org type URIs (e.g., `schema:Product`). Semantic types configured via `types` are now
+exposed through `rdfs:subClassOf`.
+
+If your clients parse Hydra documentation and rely on class `@id` values or property ranges
+matching schema.org URIs, update them to expect `#ShortName` identifiers.
+
+### JSON-LD `@type` with `itemUriTemplate` and Output DTOs
+
+When using `output` with `itemUriTemplate` on a collection operation, the JSON-LD `@type` now
+uses the resource class name instead of the output DTO class name. This ensures semantic
+consistency with `itemUriTemplate` behavior.
+
+If you rely on `@type` matching the output DTO class name, update your client code accordingly.
+
+### `enable_link_security` Deprecated and Enabled by Default
+
+The `enable_link_security` configuration option is deprecated and will be removed in API Platform 5.0.
+The default value has changed from `false` to `true`, meaning security on Links (sub-resources) is
+now always active.
+
+If you explicitly set `enable_link_security: false`, remove it and review your security
+configuration for sub-resources.
+
+### `ObjectMapperProcessor` Deprecated
+
+`ObjectMapperProcessor` is deprecated in API Platform 4.3. Use the dedicated `ObjectMapperInputProcessor`
+and `ObjectMapperOutputProcessor` instead.
+
+### Doctrine Read-Only Entities Automatically Exclude PUT and PATCH
+
+If a Doctrine entity is marked as `#[ORM\Entity(readOnly: true)]`, API Platform automatically
+removes `Put` and `Patch` operations. Read-only entities can still have `Get`, `GetCollection`,
+`Post`, and `Delete` operations.
+
+If you have read-only entities with explicit PUT or PATCH operations, they will be silently removed.
+
+### Security `isGranted` Evaluated Before Provider
+
+When `security` is configured on an operation and the expression does not reference the `object`
+variable, the access check is now evaluated **before** calling the state provider. This means
+unauthorized requests are rejected without triggering database queries.
+
+When the expression uses `object`, the provider is still called first (as before).
+
+### Doctrine Filters Throw on Missing `property`
+
+`ExactFilter`, `IriFilter`, `PartialSearchFilter`, and `UuidFilter` now throw
+`InvalidArgumentException` if the parameter's `property` is null. Previously this would silently
+produce errors or unexpected behavior. Make sure your filter parameters always specify a `property`.
+
+### JSON:API Spec-Compliant Resource Identifiers
+
+API Platform 4.3 introduces a new `use_iri_as_id` option under `api_platform.jsonapi`.
+When set to `false`, JSON:API responses use the entity identifier (e.g., `"10"`) as the
+`id` field instead of the IRI (e.g., `"/api/dummies/10"`), which conforms to the JSON:API
+specification's convention of using `type` + scalar `id` for resource identification.
+The IRI is then moved to `data.links.self`.
+
+The default is `true`, preserving existing behaviour. To opt in to spec-compliant identifiers:
+
+```yaml
+# config/packages/api_platform.yaml
+api_platform:
+    jsonapi:
+        use_iri_as_id: false
+```
+
+This option is deprecated as of API Platform 4.4 (the `true` default will emit a
+deprecation notice) and will be removed in API Platform 5.0, where entity identifiers
+become the only supported mode.
+
+If you use JSON:API and rely on the IRI as `data.id`, update your clients before upgrading
+to 5.0 to read `data.links.self` for the IRI and `data.id` for the scalar identifier.
+
 ## API Platform 3.4
 
 Remove the `keep_legacy_inflector`, the `event_listeners_backward_compatibility_layer` and the `rfc_7807_compliant_errors` flag:
