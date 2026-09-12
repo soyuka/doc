@@ -810,3 +810,52 @@ return [
     ],
 ];
 ```
+
+## Resolving Container Parameters in Resource Configuration
+
+> [!WARNING] This is not available with Laravel, only with the Symfony integration.
+
+Symfony container parameters (`%app.some_param%`) can be referenced inside resource configuration,
+whether it is declared with YAML, XML, or PHP attributes. This lets you keep values such as a
+security expression or a route prefix in `parameters.yaml` instead of hard-coding them in the
+resource.
+
+Two resolution rules apply, depending on the field:
+
+- On plain string fields (`shortName`, `description`, `uriTemplate`, `routePrefix`, `routeName`,
+  `host`, `controller`, `provider`, `processor`, `securityMessage`,
+  `securityPostDenormalizeMessage`, `securityPostValidationMessage`, and a `Link`'s `fromClass` /
+  `toClass`), `%param%` is resolved anywhere in the string.
+- On ExpressionLanguage fields (`security`, `securityPostDenormalize`, `securityPostValidation`,
+  `condition`), the whole trimmed value must be a single `%param%` reference to be resolved. A
+  partial use, or a real modulo expression such as `object.value % 2 === 0`, reaches the expression
+  engine untouched.
+
+`%%` escapes a literal `%`, and `%env(...)%` parameters are not allowed in resource configuration.
+
+```yaml
+# config/services.yaml
+parameters:
+    app.admin_security: 'is_granted("ROLE_ADMIN")'
+```
+
+```php
+// src/ApiResource/Book.php
+namespace App\ApiResource;
+
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+
+#[ApiResource(
+    operations: [
+        new Get(security: '%app.admin_security%'),
+    ],
+)]
+class Book
+{
+    // ...
+}
+```
+
+The same `%app.admin_security%` reference works unchanged in an equivalent YAML or XML resource
+configuration file.
