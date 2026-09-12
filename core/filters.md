@@ -55,9 +55,9 @@ a new instance:
   associations.
     - Usage: `new QueryParameter(filter: IriFilter::class)`
 - **`ComparisonFilter`**: A decorator that wraps an equality filter (`ExactFilter`, `UuidFilter`) to
-  add `gt`, `gte`, `lt`, `lte`, and `ne` operators. Recommended for numeric comparisons; in 5.0 it
-  also gains a native `[between]=X..Y` operator. (`DateFilter` and `RangeFilter` are kept as drop-in
-  filters — see below.)
+  add `gt`, `gte`, `lt`, `lte`, `ne`, and a native `between` (`[between]=X..Y`) operator.
+  Recommended for numeric comparisons. (`DateFilter` is kept as a drop-in filter — see below;
+  `RangeFilter` is deprecated in its favor.)
     - Usage:
       `new QueryParameter(filter: new ComparisonFilter(new ExactFilter()), property: 'price')`
 - **`FreeTextQueryFilter`**: Applies a filter across multiple properties using a single parameter.
@@ -66,8 +66,8 @@ a new instance:
 - **`OrFilter`**: A decorator that forces a filter to combine criteria with `OR` instead of `AND`.
     - Usage:
       `new QueryParameter(filter: new OrFilter(new ExactFilter()), properties: ['name', 'ean'])`
-- **`ChainFilter`** (Doctrine ORM/ODM only): Composes several filters on a single parameter key; each
-  wrapped filter self-selects by the shape of the value. See the
+- **`ChainFilter`** (Doctrine ORM/ODM only): Composes several filters on a single parameter key;
+  each wrapped filter self-selects by the shape of the value. See the
   [Doctrine Filters documentation](doctrine-filters.md#chain-filter) for details.
     - Usage:
       `new QueryParameter(filter: new ChainFilter([new ExactFilter(), new DateFilter()]), property: 'birthdate')`
@@ -76,7 +76,8 @@ a new instance:
 - **`NumericFilter`**: For numeric field filtering (legacy, `ExactFilter` or `ComparisonFilter` is
   recommended instead).
     - Usage: `new QueryParameter(filter: NumericFilter::class)`
-- **`RangeFilter`**: For range-based filtering (legacy, `ComparisonFilter` is recommended instead).
+- **`RangeFilter`**: For range-based filtering. **Deprecated since 4.4, removed in 6.0** — use
+  `ComparisonFilter` wrapping `ExactFilter` instead.
     - Usage: `new QueryParameter(filter: RangeFilter::class)`
 - **`ExistsFilter`**: For checking existence of nullable values.
     - Usage: `new QueryParameter(filter: ExistsFilter::class)`
@@ -262,10 +263,10 @@ This configuration allows clients to filter events by date ranges using queries 
 - `/events?endDate[lt]=2023-12-31` — events ending before December 31st 2023
 - `/events?startDate[gte]=2023-01-01&endDate[lte]=2023-12-31` — events within a date range
 
-> [!NOTE] This is a plain comparison, distinct from
-> [`DateFilter`](doctrine-filters.md#date-filter): it does not provide per-property `null`
-> management, tolerant handling of invalid or empty values, or the `before`/`after` versus
-> `strictly_before`/`strictly_after` vocabulary. Use `DateFilter` when you need those behaviors.
+> [!NOTE] This is a plain comparison, distinct from [`DateFilter`](doctrine-filters.md#date-filter):
+> it does not provide per-property `null` management, tolerant handling of invalid or empty values,
+> or the `before`/`after` versus `strictly_before`/`strictly_after` vocabulary. Use `DateFilter`
+> when you need those behaviors.
 
 ### Filtering a Single Property
 
