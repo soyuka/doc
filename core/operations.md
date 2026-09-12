@@ -60,8 +60,8 @@ empty. API Platform supports `application/json` and `application/x-www-form-urle
 bodies for this operation.
 
 The following operation uses a parameter-driven filter. Although it is declared with
-`QueryParameter`, the `name` criterion is sent in the `QUERY` request body, not as
-`?name=...` in the URL:
+`QueryParameter`, the `name` criterion is sent in the `QUERY` request body, not as `?name=...` in
+the URL:
 
 ```php
 <?php
@@ -104,9 +104,9 @@ custom provider.
 
 ### Criteria DTOs
 
-For a structured query, set an `input` class on the operation and put `QueryParameter` attributes
-on its properties. API Platform uses that class as the request-body schema and discovers its
-parameters to apply their filters:
+For a structured query, set an `input` class on the operation and put `QueryParameter` attributes on
+its properties. API Platform uses that class as the request-body schema and discovers its parameters
+to apply their filters:
 
 ```php
 <?php
@@ -140,21 +140,62 @@ class Book
 ```
 
 The input class is not deserialized and passed to a state provider by default. With the default
-`Query` settings, it documents the body and declares the filter criteria; providers continue to
-use the usual provider arguments and request context.
+`Query` settings, it documents the body and declares the filter criteria; providers continue to use
+the usual provider arguments and request context.
 
 When the query itself is a command-like operation and a processor needs a typed criteria object,
 disable the read stage and explicitly enable deserialization and writing. The processor then
 receives the deserialized `BookCriteria` object as its `$data` argument:
 
 ```php
-new Query(
-    input: BookCriteria::class,
-    read: false,
-    deserialize: true,
-    write: true,
-    processor: BookCriteriaProcessor::class,
-)
+<?php
+// api/src/Entity/Book.php
+namespace App\Entity;
+
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Query;
+use App\Dto\BookCriteria;
+use App\State\BookCriteriaProcessor;
+
+#[ApiResource(operations: [
+    new Query(
+        input: BookCriteria::class,
+        read: false,
+        deserialize: true,
+        write: true,
+        processor: BookCriteriaProcessor::class,
+    ),
+])]
+class Book
+{
+    // ...
+}
+```
+
+```php
+<?php
+// api/src/State/BookCriteriaProcessor.php
+namespace App\State;
+
+use ApiPlatform\Metadata\Operation;
+use ApiPlatform\State\ProcessorInterface;
+use App\Dto\BookCriteria;
+use App\Entity\Book;
+
+/** @implements ProcessorInterface<BookCriteria, iterable<Book>> */
+final readonly class BookCriteriaProcessor implements ProcessorInterface
+{
+    public function __construct(private BookSearch $bookSearch) {}
+
+    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): iterable
+    {
+        if (!$data instanceof BookCriteria) {
+            throw new \LogicException('Expected BookCriteria.');
+        }
+
+        return $this->bookSearch->search($data);
+    }
+}
 ```
 
 This is the processor path: a processor is only called for a safe operation when `write` is set to
