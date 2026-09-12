@@ -35,9 +35,6 @@ api_platform:
         # If you want to serialize only some payload fields, define them like this: [ severity, anotherPayloadField ]
         serialize_payload_fields: []
 
-        # To enable or disable query parameters validation on collection GET requests
-        query_parameter_validation: true
-
     eager_loading:
         # To enable or disable eager loading.
         enabled: true
@@ -102,10 +99,6 @@ api_platform:
         # The list of paths with files or directories where the bundle will look for additional resource files.
         paths: []
 
-    # The list of your resources class directories. Defaults to the directories of the mapping paths but might differ.
-    resource_class_directories:
-        - '%kernel.project_dir%/src/Entity'
-
     doctrine:
         # To enable or disable Doctrine ORM support.
         enabled: true
@@ -143,14 +136,10 @@ api_platform:
         # Enabled by default with installed api-platform/graphql.
         enabled: false
 
-        # The default IDE (graphiql or graphql-playground) used when going to the GraphQL endpoint. False to disable.
+        # The default IDE (graphiql) used when going to the GraphQL endpoint. False to disable.
         default_ide: 'graphiql'
 
         graphiql:
-            # Enabled by default with installed api-platform/graphql and Twig.
-            enabled: false
-
-        graphql_playground:
             # Enabled by default with installed api-platform/graphql and Twig.
             enabled: false
 
@@ -211,7 +200,7 @@ api_platform:
             enabled: false
 
             # URLs of the Varnish servers to purge using cache tags when a resource is updated.
-            varnish_urls: []
+            urls: []
 
             # To pass options to the client charged with the request.
             request_options: []
@@ -433,9 +422,6 @@ return [
         // Enable the serialization of payload fields when a validation error is thrown.
         // If you want to serialize only some payload fields, define them like this: [ severity, anotherPayloadField ]
         'serialize_payload_fields' => [],
-
-        // To enable or disable query parameters validation on collection GET requests
-        'query_parameter_validation' => true,
     ],
 
     'eager_loading' => [
@@ -504,11 +490,6 @@ return [
     'mapping' => [
         // The list of paths with files or directories where the bundle will look for additional resource files.
         'paths' => [],
-    ],
-
-    // The list of your resources class directories. Defaults to the directories of the mapping paths but might differ.
-    'resource_class_directories' => [
-        '%kernel.project_dir%/src/Entity',
     ],
 
     'doctrine' => [
@@ -630,7 +611,7 @@ return [
             'enabled' => false,
 
             // URLs of the Varnish servers to purge using cache tags when a resource is updated.
-            'varnish_urls' => [],
+            'urls' => [],
 
             // To pass options to the client charged with the request.
             'request_options' => [],
