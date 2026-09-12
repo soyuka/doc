@@ -710,12 +710,8 @@ The `IriConverterParameterProvider` supports the following options in `extraProp
 
 ### `ReadLinkParameterProvider`
 
-This provider must be enabled before it can be used.
-
-```yaml
-api_platform:
-    enable_link_security: true
-```
+Security on `Link` is always enabled since API Platform 5.0; the previous `enable_link_security`
+flag has been removed and no longer needs to be configured.
 
 This provider fetches a linked resource from a given identifier. This is useful when you need to
 load a related entity to use later, for example in your own state provider. When you have an API
