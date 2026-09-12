@@ -190,7 +190,7 @@ final readonly class BookCriteriaProcessor implements ProcessorInterface
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): iterable
     {
         if (!$data instanceof BookCriteria) {
-            throw new \LogicException('Expected BookCriteria.');
+            throw new \RutimeException('Expected BookCriteria.');
         }
 
         return $this->bookSearch->search($data);
